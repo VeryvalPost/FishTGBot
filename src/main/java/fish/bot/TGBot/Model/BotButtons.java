@@ -24,6 +24,7 @@ public class BotButtons {
         AI.setCallbackData("AI");
         CLUB.setCallbackData("CLUB");
 
+        //TODO в дальнейшем реализовать функционал записи на курс
         //List<InlineKeyboardButton> row1 = List.of(YC, AI);
         List<InlineKeyboardButton> row2 = List.of(CLUB);
 

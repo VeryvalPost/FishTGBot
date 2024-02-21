@@ -12,6 +12,7 @@ import lombok.*;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.mail.SimpleMailMessage;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
@@ -258,6 +259,7 @@ public class BotService extends TelegramLongPollingBot implements BotCommands {
 
 
                 } catch (TelegramApiException e) {
+                    log.error(e);
                     throw new RuntimeException(e);
                 }
             }
@@ -274,9 +276,8 @@ public class BotService extends TelegramLongPollingBot implements BotCommands {
 
             try {
                 botButtonUtils(inputText, chatId, usersNickName, messageID);
-            } catch (ParseException e) {
-                throw new RuntimeException(e);
-            } catch (TelegramApiException e) {
+            } catch (ParseException | TelegramApiException e) {
+                log.error(e);
                 throw new RuntimeException(e);
             }
         }
@@ -311,6 +312,7 @@ public class BotService extends TelegramLongPollingBot implements BotCommands {
 
                     createRecordInNotion(chatID);
                 } catch (TelegramApiException e) {
+                    log.error("ошибка при записи ссылки на фото " + e);
                     e.printStackTrace();
                 }
 
@@ -330,6 +332,7 @@ public class BotService extends TelegramLongPollingBot implements BotCommands {
                 try {
                     execute(code);
                 } catch (TelegramApiException e) {
+                    log.error("ошибка при добавлении ссылки на фото в notion" + e);
                     throw new RuntimeException(e);
                 }
 
@@ -512,6 +515,7 @@ public class BotService extends TelegramLongPollingBot implements BotCommands {
         }
     }
 
+    // Интеграция с Notion
 
     private void createRecordInNotion(long chatID) {
         Users userDB = usersRepository.findById(chatID).get();
@@ -538,8 +542,30 @@ public class BotService extends TelegramLongPollingBot implements BotCommands {
 
 
         notionService.createNotionRecord(nameFam,telegram, country,language, aboutProj, stageProj, linkProj, roleProj, helpProj, expertise, canHelp,  inspire, values ,photoLink ,date);
+
+
+        // Отправка заявки на email
+        StringBuilder orderStringBuilder = new StringBuilder();
+
+        orderStringBuilder.append("Данные заявки:"+"\n")
+                .append("   Имя :" + nameFam+"\n")
+                .append("   Телеграм :" + telegram+"\n")
+                .append("   Дата рождения :" + formattedDate);
+
+        sendEmailToAddress("veryval@mail.ru","veryval85@mail.ru", orderStringBuilder.toString());
+
+
     }
 
+
+    private void sendEmailToAddress(String addressFrom, String addressTo, String text){
+        SimpleMailMessage mailMessage = new SimpleMailMessage();
+        mailMessage.setFrom(addressFrom);
+        mailMessage.setTo(addressTo);
+        mailMessage.setSubject("Новая заявка от бота ");
+        mailMessage.setText(text);
+        emailService.sendEmail(mailMessage);
+    }
 
     private void showCommand(long chatId) {
         sendMsg(chatId, "TO DO показать все сообщения");
@@ -601,7 +627,9 @@ public class BotService extends TelegramLongPollingBot implements BotCommands {
 
 
     private void botButtonUtils(String receivedMessage, long chatId, String userName, int messageID) throws ParseException, TelegramApiException {
-/*
+        //TODO
+        // календарь с кнопками оказался неудобен пользователям. Временно закомментировал, пересмотреть интерфейс.
+        /*
         Calendar sendCal = new Calendar();
 
         if (receivedMessage.startsWith("!?")) {
@@ -648,7 +676,8 @@ public class BotService extends TelegramLongPollingBot implements BotCommands {
 */
 
         switch (receivedMessage) {
-
+            //TODO
+            // блок с выбором курсов YC AI и оплатой отключен в данной версии и будет реализован в дальнейшем
             case ("YC"):
 
 
